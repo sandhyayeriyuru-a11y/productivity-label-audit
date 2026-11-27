@@ -3,9 +3,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[1]
-DATA = ROOT / "data" / "enterprise_full_dataset.csv"
-RESULTS = ROOT / "results"
+HERE = Path(__file__).resolve().parent
+CSV_NAME = "enterprise_full_dataset.csv"
+# the CSV may sit next to the scripts or in a data/ folder beside them
+_CANDIDATES = [HERE / CSV_NAME, HERE / "data" / CSV_NAME,
+               HERE.parent / "data" / CSV_NAME]
+DATA = next((p for p in _CANDIDATES if p.exists()), _CANDIDATES[0])
+RESULTS = HERE / "results"
 RESULTS.mkdir(exist_ok=True)
 
 TARGET = "Productivity_Class"
@@ -34,7 +38,12 @@ CUTS = (0.50, 0.70)
 SEEDS = (42, 43, 44)
 
 
-def load(path=DATA):
+def load(path=None):
+    path = Path(path) if path else DATA
+    if not path.exists():
+        raise FileNotFoundError(
+            f"{CSV_NAME} not found. Download it from Kaggle (see README) and save it "
+            f"in the same folder as the scripts: {HERE}")
     d = pd.read_csv(path)
     assert d.shape == (5275, 29), f"unexpected shape {d.shape}"
     return d

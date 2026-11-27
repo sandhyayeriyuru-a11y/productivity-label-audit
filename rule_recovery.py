@@ -45,8 +45,13 @@ def fit_rule(X, y, C_screen=0.05, C_bound=1e3):
     return w, np.array(tau)
 
 
-def predict(X, w, tau):
+def predict(X, w, tau, exact=False):
+    """Classify by the latent score. With exact=True the score is rounded to 8 decimals,
+    i.e. evaluated in exact decimal arithmetic for grid weights and 2-decimal inputs,
+    so that floating-point error cannot move a record across a cut-point."""
     s = X @ w
+    if exact:
+        s = np.round(s, 8)
     return sum((s > t).astype(int) for t in tau)
 
 
@@ -62,7 +67,7 @@ def diagnose(X, y, grid=0.05, seeds=(42, 43, 44), C_screen=0.05, C_bound=1e3,
             lin.append((predict(X[te], w, tau) == y[te]).mean())
             wr, tr_ = round_to(w, grid), round_to(tau, grid)
             rules.add(tuple(np.round(np.r_[wr, tr_], 8)))
-            rnd.append((predict(X[te], wr, tr_) == y[te]).mean())
+            rnd.append((predict(X[te], wr, tr_, exact=True) == y[te]).mean())
             folds.append((w, tau))
             if with_lgbm:
                 m = LGBMClassifier(verbose=-1, random_state=sd).fit(X[tr], y[tr])
