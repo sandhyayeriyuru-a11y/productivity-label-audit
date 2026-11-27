@@ -1,4 +1,0 @@
-data/*.csv
-results/*
-!results/.gitkeep
-__pycache__/
